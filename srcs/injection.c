@@ -6,7 +6,7 @@
 /*   By: vdarmaya <vdarmaya@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/08/26 14:38:09 by vdarmaya          #+#    #+#             */
-/*   Updated: 2018/09/02 18:16:26 by vdarmaya         ###   ########.fr       */
+/*   Updated: 2018/11/23 15:29:14 by vdarmaya         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,23 +61,6 @@ static Elf64_Shdr	*get_text_section(Elf64_Ehdr *woody_header)
 	return (NULL);
 }
 
-static void		edit_decrypt(Elf64_Ehdr *woody_header, Elf64_Shdr *text_sec, Elf64_Ehdr *decrypt_ptr, char *key)
-{
-	Elf64_Shdr	*decrypt_text_sec;
-	void		*edit_data;
-
-	decrypt_text_sec = (void*)decrypt_ptr + decrypt_ptr->e_shoff + sizeof(Elf64_Shdr);	// .text section
-	edit_data = (void*)decrypt_ptr + decrypt_text_sec->sh_offset + decrypt_text_sec->sh_size;	// on set le ptr sur la fin de la section .text
-	edit_data -= 40;														// on set le ptr sur start_address
-	reverse_write(edit_data, woody_header->e_entry);
-	edit_data += 8;															// on set le ptr sur l'address a decrypter
-	reverse_write(edit_data, text_sec->sh_addr);
-	edit_data += 8;															// on set le ptr sur la key
-	ft_memcpy(edit_data, key, 16);
-	edit_data += 16;														// on set le ptr sur la taille a decrypter
-	reverse_write(edit_data, text_sec->sh_size);
-}
-
 static void			*get_strtab(Elf64_Ehdr *hdr)
 {
 	Elf64_Shdr		*sec_strtab = NULL;
@@ -97,34 +80,59 @@ static void			*get_strtab(Elf64_Ehdr *hdr)
 	return ((void *)hdr + sec_strtab->sh_offset);
 }
 
-void	test_sym(Elf64_Ehdr *woody_header, void *decrypt_ptr)
+static void		edit_decrypt(Elf64_Ehdr *woody_header, Elf64_Ehdr *decrypt_ptr, \
+	Elf64_Addr new_entry_point, size_t my_code_offset, Elf64_Shdr *text_sec, char *key)
 {
 	Elf64_Sym	*sym;
 	Elf64_Shdr	*symtab;
 	void		*strtab;
 	int			to_write = 0;
 	int			inst_offset = 0;
+	Elf64_Shdr	*text_shdr = (void*)decrypt_ptr + decrypt_ptr->e_shoff + sizeof(Elf64_Shdr);	// .text section
+	void		*edit_data = (void*)decrypt_ptr + text_shdr->sh_offset + text_shdr->sh_size;
 
 
 	symtab = get_section_by_type(decrypt_ptr, 2);
 	strtab = get_strtab(decrypt_ptr);
-	sym = decrypt_ptr + symtab->sh_offset;
-	while ((void *)sym < (decrypt_ptr + symtab->sh_offset + symtab->sh_size))
+	sym = (void*)decrypt_ptr + symtab->sh_offset;
+	while ((void *)sym < ((void*)decrypt_ptr + symtab->sh_offset + symtab->sh_size))
 	{
 		if (!ft_strcmp(strtab + sym->st_name, "start_address"))
 		{
-			printf("st_value: %lu\n", sym->st_value);
-			inst_offset = 0x208220 + sym->st_value;
-			printf("inst_offset: %d\n", inst_offset);
-			to_write = 0x1c50 - inst_offset;
+			inst_offset = new_entry_point + sym->st_value;
+			to_write = woody_header->e_entry - inst_offset;
 			to_write = to_write < 0 ? -to_write : to_write;
-			printf("to_write: %d\n", to_write);
+			edit_data -= 40;
+			reverse_write(edit_data, to_write);
+			edit_data += 40;
+		}
+		else if (!ft_strcmp(strtab + sym->st_name, "crypted_address"))
+		{
+			inst_offset = new_entry_point + sym->st_value;
+			to_write = text_sec->sh_addr - inst_offset;
+			to_write = to_write < 0 ? -to_write : to_write;
+			edit_data -= 32;
+			reverse_write(edit_data, to_write);
+			edit_data += 32;
+		}
+		else if (!ft_strcmp(strtab + sym->st_name, "key"))
+		{
+			edit_data -= 24;
+			ft_memcpy(edit_data, key, 16);
+			edit_data += 24;
+		}
+		else if (!ft_strcmp(strtab + sym->st_name, "len"))
+		{
+			edit_data -= 8;
+			reverse_write(edit_data, text_sec->sh_size);
+			edit_data += 8;
 		}
 		++sym;
 	}
 }
 
-void			encrypt_code(Elf64_Ehdr *woody_header, void *decrypt_ptr)
+void			encrypt_code(Elf64_Ehdr *woody_header, void *decrypt_ptr, \
+					Elf64_Addr new_entry_point, size_t my_code_offset)
 {
 	void		*inject_ptr;
 	Elf64_Shdr	*text_sec;
@@ -137,12 +145,9 @@ void			encrypt_code(Elf64_Ehdr *woody_header, void *decrypt_ptr)
 	inject_ptr = (void*)woody_header + text_sec->sh_offset;
 	while (count < text_sec->sh_size)
 	{
-		// encrypt_me(inject_ptr, key);
+		encrypt_me(inject_ptr, key);
 		inject_ptr += 16;
 		count += 16;
 	}
-	test_sym(woody_header, decrypt_ptr);
-	edit_decrypt(woody_header, text_sec, decrypt_ptr, key);
+	edit_decrypt(woody_header, decrypt_ptr, new_entry_point, my_code_offset, text_sec, key);
 }
-
-// les binaire qui marche pas sont des 

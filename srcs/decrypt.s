@@ -6,10 +6,6 @@ section .text
 ;                       rdi                 rsi        rdx
 
 go_decrypt:
-	; mov	r8, 0x20673
-	; sub r8, [r8]
-	; jmp r8
-
 	pushf
 	push rdi
 	push rsi
@@ -25,12 +21,13 @@ go_decrypt:
 	mov rdx, 16						; length of the string
 	syscall
 
-	; mov		rcx, [rel len]
-	; mov		rbx, [rel crypted_address]
-	; movdqu	xmm5, [rel key]
-	; movdqu	xmm0, [rel key]
-	; call	init_key
-	; call	decrypt_loop
+	mov		rcx, [rel len]
+	lea		rbx, [rel crypted_address]
+	sub		rbx, [rbx]
+	movdqu	xmm5, [rel key]
+	movdqu	xmm0, [rel key]
+	call	init_key
+	call	decrypt_loop
 	
 	pop rdx
 	pop rcx
@@ -39,7 +36,8 @@ go_decrypt:
 	pop rsi
 	pop rdi
 	popf
-	mov	r8, [rel start_address]
+	lea	r8, [rel start_address]
+	sub r8, [r8]
 	jmp r8
 
 decrypt_loop:

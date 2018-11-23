@@ -31,7 +31,7 @@ all: $(NAME)
 
 $(NAME): mkobjdir $(FILES) $(FILES_S)
 	@ echo "Assembling:"
-	@ $(CC) -o $(NAME) $(OBJS)
+	@ $(CC) $(CFLAGS) -o $(NAME) $(OBJS)
 	@ echo "\033[32mAll done!\033[0m"
 
 mkobjdir:
@@ -58,6 +58,7 @@ clean:
 fclean: clean
 	@ /bin/echo -n "Removing library:"
 	@ rm -rf $(NAME)
+	@ rm -rf woody
 	@ echo " \033[32mdone\033[0m"
 
 re: fclean all

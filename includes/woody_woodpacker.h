@@ -6,7 +6,7 @@
 /*   By: vdarmaya <vdarmaya@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/08/13 18:58:54 by vdarmaya          #+#    #+#             */
-/*   Updated: 2018/08/30 17:26:19 by vdarmaya         ###   ########.fr       */
+/*   Updated: 2018/11/23 15:21:33 by vdarmaya         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,13 +30,11 @@
 
 typedef uint16_t Elf64_Half;
 typedef uint32_t Elf64_Word;
-// typedef	int32_t  Elf64_Sword;
 typedef uint64_t Elf64_Xword;
 typedef	int64_t  Elf64_Sxword;
 typedef uint64_t Elf64_Addr;
 typedef uint64_t Elf64_Off;
 typedef uint16_t Elf64_Section;
-// typedef Elf64_Half Elf64_Versym;
 
 # define EI_NIDENT (16)
 # define ELFMAG		0x464c457f	/* Magic number */
@@ -76,6 +74,7 @@ typedef struct
 # define SHT_PROGBITS	1			/* Program data */
 # define SHT_STRTAB		3			/* String table */
 # define DT_SYMTAB		6			/* Address of symbol table */
+# define SHF_WRITE	    (1 << 0)	/* Writable */
 # define SHF_ALLOC		(1 << 1)	/* Occupies memory during execution */
 # define SHF_EXECINSTR	(1 << 2)	/* Executable */
 
@@ -106,6 +105,8 @@ typedef struct
   Elf64_Xword	st_size;		/* Symbol size */
 } Elf64_Sym;
 
+#define SHT_SYMTAB	  2		/* Symbol table */
+
 /*
 * ------------- END ELF ---------------
 */
@@ -119,7 +120,7 @@ void			*get_decrypt_data(size_t *decrypt_size);
 Elf64_Shdr		*get_crypt_section(Elf64_Ehdr *header);
 Elf64_Phdr		*get_last_load_segment(Elf64_Ehdr *hdr);
 Elf64_Shdr		*get_section_by_type(Elf64_Ehdr *header, Elf64_Word type);
-void			encrypt_code(Elf64_Ehdr *woody_header, void *decrypt_ptr);
+void			encrypt_code(Elf64_Ehdr *woody_header, void *decrypt_ptr, Elf64_Addr new_entry_point, size_t my_code_offset);
 void			encrypt_me(void *ptr, char *key);
 
 /*
