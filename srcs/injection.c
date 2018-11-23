@@ -6,7 +6,7 @@
 /*   By: vdarmaya <vdarmaya@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/08/26 14:38:09 by vdarmaya          #+#    #+#             */
-/*   Updated: 2018/11/23 15:29:14 by vdarmaya         ###   ########.fr       */
+/*   Updated: 2018/11/23 16:13:08 by vdarmaya         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,22 +132,28 @@ static void		edit_decrypt(Elf64_Ehdr *woody_header, Elf64_Ehdr *decrypt_ptr, \
 }
 
 void			encrypt_code(Elf64_Ehdr *woody_header, void *decrypt_ptr, \
-					Elf64_Addr new_entry_point, size_t my_code_offset)
+					Elf64_Addr new_entry_point, size_t my_code_offset, char *key)
 {
 	void		*inject_ptr;
 	Elf64_Shdr	*text_sec;
 	size_t		count = 0;
-	char		key[17];
+	char		key2[17];
 
-	rand_key(key);
-	printf("KEY: %s\n", key);
+	if (key == NULL)
+	{
+		rand_key(key2);
+		printf("KEY: %s\n", key2);
+	}
+	else
+		printf("KEY: %s\n", key);
 	text_sec = get_text_section(woody_header);	// .text section
 	inject_ptr = (void*)woody_header + text_sec->sh_offset;
 	while (count < text_sec->sh_size)
 	{
-		encrypt_me(inject_ptr, key);
+		encrypt_me(inject_ptr, key == NULL ? key2 : key);
 		inject_ptr += 16;
 		count += 16;
 	}
-	edit_decrypt(woody_header, decrypt_ptr, new_entry_point, my_code_offset, text_sec, key);
+	edit_decrypt(woody_header, decrypt_ptr, new_entry_point, my_code_offset, \
+		text_sec, key == NULL ? key2 : key);
 }

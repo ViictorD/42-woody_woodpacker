@@ -56,7 +56,7 @@ static void	update_segments_flag(Elf64_Ehdr *hdr)
 	}
 }
 
-static void	manage_elf(void *ptr, size_t ori_size)
+static void	manage_elf(void *ptr, size_t ori_size, char *key)
 {
 	void		*woody_ptr;
 	void		*decrypt_ptr;
@@ -98,7 +98,7 @@ static void	manage_elf(void *ptr, size_t ori_size)
 
 	encrypt_code(woody_ptr, decrypt_ptr, \
 		my_code_offset + (load_segment->p_vaddr - load_segment->p_offset) + bss_len, \
-		my_code_offset);
+		my_code_offset, key);
 	
 	// 7. On copy le code qui va decrypter
 	ft_memcpy(woody_ptr + my_code_offset + bss_len, decrypt_ptr + tmp->sh_offset, woody_size);
@@ -112,7 +112,7 @@ static void	manage_elf(void *ptr, size_t ori_size)
 		ft_exit("woody_woodpacker: Munmap failed", 1);
 }
 
-static void	handle_binary(int fd, struct stat buff)
+static void	handle_binary(int fd, struct stat buff, char *key)
 {
 	void	*ptr;
 
@@ -126,7 +126,7 @@ static void	handle_binary(int fd, struct stat buff)
 	{
 		if (((Elf64_Ehdr*)ptr)->e_ident[4] != 2)	// check if 64bits
 			ft_exit("woody_woodpacker: File architecture not suported. x64 only", 1);
-		manage_elf(ptr, buff.st_size);
+		manage_elf(ptr, buff.st_size, key);
 		if ((munmap(ptr, buff.st_size)) < 0)
 			ft_exit("woody_woodpacker: Munmap failed", 1);
 	}
@@ -134,7 +134,7 @@ static void	handle_binary(int fd, struct stat buff)
 		ft_exit("woody_woodpacker: Not an elf file", 1);
 }
 
-void	manage_file(char *path)
+void	manage_file(char *path, char *key)
 {
 	int				fd;
 	struct stat		buff;
@@ -143,5 +143,5 @@ void	manage_file(char *path)
 		ft_exit("woody_woodpacker: No such file or directory.\n", 1);
 	if (fstat(fd, &buff) < 0)
 		ft_exit("woody_woodpacker: Open file failed\n", 1);
-	handle_binary(fd, buff);
+	handle_binary(fd, buff, key);
 }

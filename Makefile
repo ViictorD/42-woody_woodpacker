@@ -35,6 +35,7 @@ $(NAME): mkobjdir $(FILES) $(FILES_S)
 	@ echo "\033[32mAll done!\033[0m"
 
 mkobjdir:
+	@ echo "src files:"
 	@ mkdir -p $(DIR_OBJ)
 
 %.c:

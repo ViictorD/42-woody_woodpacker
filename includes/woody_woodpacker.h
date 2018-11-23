@@ -6,7 +6,7 @@
 /*   By: vdarmaya <vdarmaya@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/08/13 18:58:54 by vdarmaya          #+#    #+#             */
-/*   Updated: 2018/11/23 15:21:33 by vdarmaya         ###   ########.fr       */
+/*   Updated: 2018/11/23 16:11:55 by vdarmaya         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,12 +115,13 @@ typedef struct
 * --------- Woody_woodpacker ----------
 */
 
-void			manage_file(char *path);
+void			manage_file(char *path, char *key);
 void			*get_decrypt_data(size_t *decrypt_size);
 Elf64_Shdr		*get_crypt_section(Elf64_Ehdr *header);
 Elf64_Phdr		*get_last_load_segment(Elf64_Ehdr *hdr);
 Elf64_Shdr		*get_section_by_type(Elf64_Ehdr *header, Elf64_Word type);
-void			encrypt_code(Elf64_Ehdr *woody_header, void *decrypt_ptr, Elf64_Addr new_entry_point, size_t my_code_offset);
+void			encrypt_code(Elf64_Ehdr *woody_header, void *decrypt_ptr, \
+					Elf64_Addr new_entry_point, size_t my_code_offset, char *key);
 void			encrypt_me(void *ptr, char *key);
 
 /*
@@ -130,5 +131,7 @@ void			encrypt_me(void *ptr, char *key);
 void	ft_exit(char *msg, int ret);
 void	*ft_memcpy(void *dest, const void *src, size_t n);
 int		ft_strcmp(const char *s1, const char *s2);
+size_t	ft_strlen(char *str);
+
 
 #endif
