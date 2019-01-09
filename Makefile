@@ -14,6 +14,7 @@ DIR_OBJ = ./obj/
 
 DIR_INC = ./includes/
 
+UNAME := $(shell uname)
 
 FILES = main.c \
 		manage_file.c \
@@ -29,10 +30,15 @@ OBJS = $(patsubst %.c, $(DIR_OBJ)%.o, $(FILES)) \
 
 all: $(NAME)
 
+ifeq ($(UNAME), Linux)
 $(NAME): mkobjdir $(FILES) $(FILES_S)
 	@ echo "Assembling:"
 	@ $(CC) $(CFLAGS) -o $(NAME) $(OBJS)
 	@ echo "\033[32mAll done!\033[0m"
+else
+$(NAME):
+	@ echo "Nope, only work on linux system !"
+endif
 
 mkobjdir:
 	@ echo "src files:"
@@ -47,9 +53,6 @@ mkobjdir:
 	@ /bin/echo -n "	$(notdir $*).o"
 	@ $(NASM) $(NASM_FLAG) $(SRC_DIR)$@ -o $(DIR_OBJ)$*.o 
 	@ echo " \033[32mOK\033[0m"
-
-debug:
-	@ $(CC) -o $(NAME) $(patsubst %.c, $(SRC_DIR)%.c, $(FILES)) -I$(DIR_INC) -g
 
 clean:
 	@ /bin/echo -n "Removing object files:"
